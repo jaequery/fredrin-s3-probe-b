@@ -1,0 +1,7 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fredrin-s3-probe-b",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-01",
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "files" }]
+}
