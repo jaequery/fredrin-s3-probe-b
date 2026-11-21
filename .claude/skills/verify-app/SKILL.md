@@ -14,8 +14,8 @@ Start wrangler with a fresh, throwaway R2 state dir and remember its PID:
 ```bash
 EVID=$(mktemp -d)                 # evidence dir — kept after cleanup
 STATE=$(mktemp -d)                # fresh local R2 state
-npx wrangler dev --local --port 8787 --persist-to "$STATE" > "$EVID/wrangler.log" 2>&1 &
-WRANGLER_PID=$!
+setsid npx wrangler dev --local --port 8787 --persist-to "$STATE" > "$EVID/wrangler.log" 2>&1 &
+WRANGLER_PID=$!                   # also the process-group id (setsid), covers workerd children
 ```
 
 Ready when `curl -s localhost:8787/` returns 200 and the body contains the form:
@@ -63,10 +63,11 @@ cd "$EVID" && cat upload.status missing.status && grep -o '<a href="/files/sampl
 
 ## Cleanup
 
-Kill only the wrangler process this skill started (and its children); never `pkill wrangler`/`workerd` globally. Keep `$EVID`.
+Kill only the wrangler process group this skill started (npx → wrangler → workerd); never `pkill wrangler`/`workerd` globally. A plain `kill $WRANGLER_PID` leaves workerd running. Keep `$EVID`.
 
 ```bash
-pkill -P "$WRANGLER_PID" 2>/dev/null; kill "$WRANGLER_PID" 2>/dev/null
+kill -- -"$WRANGLER_PID" 2>/dev/null
+sleep 2; pgrep -g "$WRANGLER_PID" >/dev/null && echo "still running" || echo stopped
 rm -rf "$STATE"
 echo "evidence kept in $EVID"
 ```
